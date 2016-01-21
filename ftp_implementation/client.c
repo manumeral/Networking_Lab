@@ -12,8 +12,8 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #define PORT "3490" // the port client will be connecting to
-#define MAXDATASIZE 100 // max number of bytes we can get at once
 // get sockaddr, IPv4 or IPv6:
+#define PACKET_SIZE 128
 void *get_in_addr(struct sockaddr *sa)
 {
 	if (sa->sa_family == AF_INET) 
@@ -24,8 +24,8 @@ void *get_in_addr(struct sockaddr *sa)
 }
 int main(int argc, char *argv[])
 {
-	int sockfd, numbytes;
-	char buf[MAXDATASIZE];
+	int sockfd, numbytes,temp;
+	char buf[PACKET_SIZE];
 	struct addrinfo hints, *servinfo, *p;
 	int rv;
 	char s[INET6_ADDRSTRLEN];
@@ -67,20 +67,44 @@ int main(int argc, char *argv[])
 	inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),s, sizeof s);
 	printf("client: connecting to %s\n", s);
 	freeaddrinfo(servinfo); // all done with this structure
-	if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) 
-	{
-		perror("recv");
-		exit(1);
-	}
-	buf[numbytes] = '\0';
-	if (send(sockfd, "0", 1, 0) == -1)
-	{
-		perror("send ack");
-	}
 
-	perror("send");
+	int count , count_of_packets ;
+	count=count_of_packets=0;
+	FILE * fd = fopen("received.txt","wb");
+	while(1)
+	{
+		numbytes = recv(sockfd, buf, PACKET_SIZE, 0);
+		if (numbytes == -1) 
+		{
+			perror("recv");
+			exit(1);
+		}
+		if (send(sockfd, "0", 1, 0) == -1)
+		{
+			perror("send ack");
+		}
+		count_of_packets++;
+		count = 0 ;
+		while(count < PACKET_SIZE-1)
+		{
 			
-	printf("client: received '%s'\n",buf);
+			if(buf[count]==EOF)
+			{
+				break;	
+			}
+			else
+			{
+				fputc(buf[count++],fd);
+			}
+		}
+		printf("client: received packet #%d\n",count_of_packets);	
+	
+		if(buf[PACKET_SIZE-1] == '0')
+		{
+			break ;
+		}
+	}
+	fclose(fd);
 	close(sockfd);
-	return 0;
+	return 0;	
 }

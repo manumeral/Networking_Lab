@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
@@ -11,7 +12,8 @@
 #include <sys/wait.h>
 #include <signal.h>
 #define PORT "3490" 
-#define BACKLOG 10  
+#define BACKLOG 10 
+#define PACKET_SIZE 128 
 void sigchld_handler(int s)
 {
 	while(waitpid(-1, NULL, WNOHANG) > 0);
@@ -83,8 +85,8 @@ int main(void)
 		perror("sigaction");
 		exit(1);
 	}
-	char buf[128];
-	int numbytes;
+	char buf[PACKET_SIZE];
+	int numbytes,temp;
 	printf("server: waiting for connections...\n");
 	while(1) 
 	{ 
@@ -101,17 +103,53 @@ int main(void)
 		{
 		 // this is the child process
 			close(sockfd); // child doesn't need the listener
-			if (send(new_fd, "Hello, world!", 13, 0) == -1)
-				perror("send");
-			if ((numbytes = recv(new_fd, buf, sizeof(buf), 0)) == -1) 
+			FILE *fd=fopen("send.txt","rb");
+			int count_of_packets = 0 ;
+			int count = 0;
+			bool eof_flag = false ;
+			while(1)
 			{
-				perror("recv");
-				exit(1);
+				count  = 0 ;
+				eof_flag = false;
+				//Preparing a Packet
+				while( count < (PACKET_SIZE-1) )
+				{
+					if(!feof(fd))
+						buf[count++]=fgetc(fd);
+					else
+					{
+						eof_flag = true ;
+						break;
+					}
+				}
+				//Packet is being Sent
+				count_of_packets++;
+				if(eof_flag == false)
+				{
+					buf[PACKET_SIZE-1]='1';// To indicate that one more packet will be sent 
+				}
+				else
+				{
+					buf[PACKET_SIZE-1]='0';	
+				}
+				temp=send(new_fd, buf, PACKET_SIZE, 0);
+				if(temp == -1)
+					perror("send");
+				if ((numbytes = recv(new_fd, buf, sizeof(buf), 0)) == -1) 
+				{
+					perror("recv");
+					exit(1);
+				}
+				if(buf[0]=='0')
+					printf("Packet #%d sent \n",count_of_packets);
+				//Packet Sent and Acknowledged
+				if(eof_flag == true)
+					break;
 			}
-			buf[numbytes] = '\0';
-			printf("I recieved %s\n",buf);
+			printf("File Transferred !\n");fclose(fd);
 			close(new_fd);
 			exit(0);
+			
 		}
 		close(new_fd); // parent doesn't need this
 	}
