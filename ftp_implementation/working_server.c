@@ -212,30 +212,37 @@ int main(void)
 void put_file(char *file_name,char *buf,int new_fd)
 {
 	// printf("In put_file\n");
-	FILE *fd=fopen(file_name,"r");
-	int count_of_packets = 0 , temp;
-	int count = 0,numbytes;
+	FILE *fd=fopen(file_name,"rb");
+	int count_of_packets = 0 ;
+	int count = 0,temp,numbytes;
 	bool eof_flag = false ;
 	while(1)
 	{
 		count  = 0 ;
 		eof_flag = false;
 		//Preparing a Packet
-		temp=fread(buf, 1, PACKET_SIZE-1, fd);
-		if(feof(fd))
+		while( count < (PACKET_SIZE-1) )
 		{
-			eof_flag = true;
-			buf[PACKET_SIZE-1]='0';
-			printf("Packet #%d sent \n",count_of_packets);
-		}
-		else
-		{
-			buf[PACKET_SIZE-1]='1';
+			if(!feof(fd))
+				buf[count++]=fgetc(fd);
+			else
+			{
+				buf[count-1]='\0';
+				eof_flag = true ;
+				break;
+			}
 		}
 		//Packet is being Sent
 		count_of_packets++;
-		printf("%d\n",temp);
-		temp=send(new_fd, buf, temp+1, 0);
+		if(eof_flag == false)
+		{
+			buf[PACKET_SIZE-1]='1';// To indicate that one more packet will be sent 
+		}
+		else
+		{
+			buf[PACKET_SIZE-1]='0';	
+		}
+		temp=send(new_fd, buf, PACKET_SIZE, 0);
 		if(temp == -1)
 			perror("send");
 		if ((numbytes = recv(new_fd, buf, sizeof(buf), 0)) == -1) 
@@ -243,6 +250,8 @@ void put_file(char *file_name,char *buf,int new_fd)
 			perror("recv");
 			exit(1);
 		}
+		if(buf[0]=='0')
+			printf("Packet #%d sent \n",count_of_packets);
 		//Packet Sent and Acknowledged
 		if(eof_flag == true)
 			break;
@@ -256,7 +265,7 @@ void get_file(char *file_name,char * buf,int sockfd)
 	// printf("In get_file\n");
 	int count , count_of_packets ;
 	count=count_of_packets=0;
-	FILE * fd = fopen(file_name,"w");
+	FILE * fd = fopen(file_name,"wb");
 	while(1)
 	{
 		int numbytes = recv(sockfd, buf, PACKET_SIZE, 0);
@@ -271,7 +280,19 @@ void get_file(char *file_name,char * buf,int sockfd)
 		}
 		count_of_packets++;
 		count = 0 ;
-		fwrite(buf,1,numbytes-1,fd);
+		while(count < PACKET_SIZE-1)
+		{
+			
+			if(buf[count]=='\0')
+			{
+				// fputc(buf[count++],fd);
+				break;	
+			}
+			else
+			{
+				fputc(buf[count++],fd);
+			}
+		}
 		printf("client: received packet #%d\n",count_of_packets);	
 	
 		if(buf[PACKET_SIZE-1] == '0')

@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
 		int iter = 1 ;
 		int count_of_comm_pack = 0 ;
 		bool eof_command = 	false ;
-		printf("Give any command:\n");
+		printf("\nMyftp>");
 		while(!isalpha(command[0]=getchar())); 
 		while((command[iter++]=getchar()) != '\n');
 		command[iter-1]='\0';
@@ -172,7 +172,8 @@ int main(int argc, char *argv[])
 
 	close(sockfd);
 	return 0;	
-}void put_file(char *file_name,char *buf,int new_fd)
+}
+void put_file(char *file_name,char *buf,int new_fd)
 {
 	// printf("In put_file\n");
 	FILE *fd=fopen(file_name,"r");
@@ -184,10 +185,9 @@ int main(int argc, char *argv[])
 		count  = 0 ;
 		eof_flag = false;
 		//Preparing a Packet
-		temp=fread(buf, 1, PACKET_SIZE-1, fd);
+		temp=fread(buf, 1, PACKET_SIZE-1, fd)
 		if(feof(fd))
 		{
-			eof_flag = true;
 			buf[PACKET_SIZE-1]='0';
 			printf("Packet #%d sent \n",count_of_packets);
 		}
@@ -234,7 +234,7 @@ void get_file(char *file_name,char * buf,int sockfd)
 		}
 		count_of_packets++;
 		count = 0 ;
-		fwrite(buf,1,numbytes-1,fd);
+		fwrite(buf,1,numbytes-1,fd)<PACKET_SIZE-1)
 		printf("client: received packet #%d\n",count_of_packets);	
 	
 		if(buf[PACKET_SIZE-1] == '0')
