@@ -221,40 +221,29 @@ void put_file(char *file_name,char *buf,int new_fd)
 		count  = 0 ;
 		eof_flag = false;
 		//Preparing a Packet
-		while( count < (PACKET_SIZE-1) )
-		{
-			if(!feof(fd))
-				buf[count++]=fgetc(fd);
-			else
-			{
-				buf[count-1]='\0';
-				eof_flag = true ;
-				break;
-			}
-		}
-		//Packet is being Sent
+		temp=fread(buf,sizeof(char),PACKET_SIZE-1,fd);
 		count_of_packets++;
-		if(eof_flag == false)
+		if(temp<PACKET_SIZE-1)
 		{
-			buf[PACKET_SIZE-1]='1';// To indicate that one more packet will be sent 
+			printf("Packet #%d sent \n",count_of_packets);
+			buf[temp]='0';
 		}
 		else
 		{
-			buf[PACKET_SIZE-1]='0';	
+			buf[temp]='1';
 		}
-		temp=send(new_fd, buf, PACKET_SIZE, 0);
-		if(temp == -1)
+		//Packet is being Sent
+		numbytes=send(new_fd, buf, temp+1, 0);
+		if(numbytes == -1)
 			perror("send");
-		if ((numbytes = recv(new_fd, buf, sizeof(buf), 0)) == -1) 
+		if (recv(new_fd, buf, sizeof(buf), 0) == -1) 
 		{
 			perror("recv");
 			exit(1);
 		}
-		if(buf[0]=='0')
-			printf("Packet #%d sent \n",count_of_packets);
-		//Packet Sent and Acknowledged
-		if(eof_flag == true)
+		if(buf[temp]=='0')
 			break;
+		//Packet Sent and Acknowledged
 	}
 	printf("File Transferred !\n");
 	fclose(fd);
@@ -280,7 +269,15 @@ void get_file(char *file_name,char * buf,int sockfd)
 		}
 		count_of_packets++;
 		count = 0 ;
-		while(count < PACKET_SIZE-1)
+		fwrite(buf,sizeof(char),numbytes-1,fd);
+		printf("client: received packet #%d\n",count_of_packets);	
+		
+		printf("%d\n",numbytes);
+		if(buf[numbytes-1]=='0')
+		{
+			break ;
+		}
+		/*while(count < PACKET_SIZE-1)
 		{
 			
 			if(buf[count]=='\0')
@@ -292,16 +289,13 @@ void get_file(char *file_name,char * buf,int sockfd)
 			{
 				fputc(buf[count++],fd);
 			}
-		}
-		printf("client: received packet #%d\n",count_of_packets);	
-	
-		if(buf[PACKET_SIZE-1] == '0')
-		{
-			break ;
-		}
+		}*/
+		/*printf("client: received packet #%d\n",count_of_packets);	
+		
+		printf("%d\n",numbytes);*/
 	}
 	fclose(fd);
-////TRANSFER ENDS
+////
 }
 bool check(char * f1, char * f2)
 {

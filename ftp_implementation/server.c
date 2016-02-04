@@ -112,7 +112,9 @@ int main(void)
 		 // this is the child process
 			close(sockfd); // child doesn't need the listener
 			//Check Command;
-			
+			char name[100];
+			name[0]='\0';
+			sprintf(name,".swp_transfer%lld\0",(long long int)(getpid()));
 			while(1)
 			{
 				int count_of_comm_pack=0;
@@ -158,9 +160,10 @@ int main(void)
 				{	
 					if( !check(command,"get") &&  !check(command,"put") && !check(command,"cd") )
 					{
-						strcat(command," > .swp_transfer");
+						strcat(command," > ");
+						strcat(command,name);
 						system(command);
-						put_file(".swp_transfer",buf,new_fd);
+						put_file(name,buf,new_fd);
 						// system("rm ~/.swp_transfer");
 					}
 					else if(check(command,"put"))
@@ -212,40 +215,38 @@ int main(void)
 void put_file(char *file_name,char *buf,int new_fd)
 {
 	// printf("In put_file\n");
-	FILE *fd=fopen(file_name,"r");
-	int count_of_packets = 0 , temp;
-	int count = 0,numbytes;
+	FILE *fd=fopen(file_name,"rb");
+	int count_of_packets = 0 ;
+	int count = 0,temp,numbytes;
 	bool eof_flag = false ;
 	while(1)
 	{
 		count  = 0 ;
 		eof_flag = false;
 		//Preparing a Packet
-		temp=fread(buf, 1, PACKET_SIZE-1, fd);
-		if(feof(fd))
+		temp=fread(buf,sizeof(char),PACKET_SIZE-1,fd);
+		count_of_packets++;
+		if(temp<PACKET_SIZE-1)
 		{
-			eof_flag = true;
-			buf[PACKET_SIZE-1]='0';
 			printf("Packet #%d sent \n",count_of_packets);
+			buf[temp]='0';
 		}
 		else
 		{
-			buf[PACKET_SIZE-1]='1';
+			buf[temp]='1';
 		}
 		//Packet is being Sent
-		count_of_packets++;
-		printf("%d\n",temp);
-		temp=send(new_fd, buf, temp+1, 0);
-		if(temp == -1)
+		numbytes=send(new_fd, buf, temp+1, 0);
+		if(numbytes == -1)
 			perror("send");
-		if ((numbytes = recv(new_fd, buf, sizeof(buf), 0)) == -1) 
+		if (recv(new_fd, buf, sizeof(buf), 0) == -1) 
 		{
 			perror("recv");
 			exit(1);
 		}
-		//Packet Sent and Acknowledged
-		if(eof_flag == true)
+		if(buf[temp]=='0')
 			break;
+		//Packet Sent and Acknowledged
 	}
 	printf("File Transferred !\n");
 	fclose(fd);
@@ -256,7 +257,7 @@ void get_file(char *file_name,char * buf,int sockfd)
 	// printf("In get_file\n");
 	int count , count_of_packets ;
 	count=count_of_packets=0;
-	FILE * fd = fopen(file_name,"w");
+	FILE * fd = fopen(file_name,"wb");
 	while(1)
 	{
 		int numbytes = recv(sockfd, buf, PACKET_SIZE, 0);
@@ -271,16 +272,33 @@ void get_file(char *file_name,char * buf,int sockfd)
 		}
 		count_of_packets++;
 		count = 0 ;
-		fwrite(buf,1,numbytes-1,fd);
+		fwrite(buf,sizeof(char),numbytes-1,fd);
 		printf("client: received packet #%d\n",count_of_packets);	
-	
-		if(buf[PACKET_SIZE-1] == '0')
+		
+//		printf("%d\n",numbytes);
+		if(buf[numbytes-1]=='0')
 		{
 			break ;
 		}
+		/*while(count < PACKET_SIZE-1)
+		{
+			
+			if(buf[count]=='\0')
+			{
+				// fputc(buf[count++],fd);
+				break;	
+			}
+			else
+			{
+				fputc(buf[count++],fd);
+			}
+		}*/
+		/*printf("client: received packet #%d\n",count_of_packets);	
+		
+		printf("%d\n",numbytes);*/
 	}
 	fclose(fd);
-////TRANSFER ENDS
+////
 }
 bool check(char * f1, char * f2)
 {
