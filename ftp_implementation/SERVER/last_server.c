@@ -112,7 +112,9 @@ int main(void)
 		 // this is the child process
 			close(sockfd); // child doesn't need the listener
 			//Check Command;
-			
+			char name[100];
+			name[0]='\0';
+			sprintf(name,".swp_transfer%lld\0",(long long int)(getpid()));
 			while(1)
 			{
 				int count_of_comm_pack=0;
@@ -145,7 +147,7 @@ int main(void)
 							command[iter++]=buf[c++];
 						}
 					}
-					printf("\n%d client: received packet #%d\n",buf[PACKET_SIZE-1],count_of_comm_pack);	
+					// printf("\n%d client: received packet #%d\n",buf[PACKET_SIZE-1],count_of_comm_pack);	
 				 
 					if(buf[PACKET_SIZE-1] == '0')
 					{
@@ -156,11 +158,12 @@ int main(void)
 				
 				if(strcmp(command,"quit") != 0)
 				{	
-					if( !check(command,"get") &&  !check(command,"put") && !check(command,"cd") )
+					if( !check(command,"mget") && !check(command,"mput") && !check(command,"get") &&  !check(command,"put") && !check(command,"cd") )
 					{
-						strcat(command," > .swp_transfer");
+						strcat(command," > ");
+						strcat(command,name);
 						system(command);
-						put_file(".swp_transfer",buf,new_fd);
+						put_file(name,buf,new_fd);
 						// system("rm ~/.swp_transfer");
 					}
 					else if(check(command,"put"))
@@ -182,6 +185,50 @@ int main(void)
 						while(command[find] != '\0' && !isspace(receive[find_r++]=command[find++]));
 						receive[find_r]='\0';
 						put_file(receive,buf,new_fd);
+					}
+					else if(check(command,"mput"))
+					{
+						int find = 0 ;
+						int find_r = 1 ;
+						while(!isspace(receive[0]=command[find++]));
+						while(command[find]!='\0')
+						{
+							find_r = 1 ;
+							while(isspace(receive[0]=command[find++]));
+							while(!isspace(receive[find_r++]=command[find]))
+								if(command[find++] == '\0')
+									break;
+							if(receive[find_r-1] != '\0')
+								receive[find_r-1] = '\0';
+							else
+							{
+								receive[find_r-1] = '\0';
+								command[find] = '\0' ;
+							}
+							get_file(receive,buf,new_fd);
+						}
+					}
+					else if(check(command,"mget"))
+					{
+						int find = 0 ;
+						int find_r = 1 ;
+						while(!isspace(receive[0]=command[find++]));
+						while(command[find]!='\0')
+						{
+							find_r = 1 ;
+							while(isspace(receive[0]=command[find++]));
+							while(!isspace(receive[find_r++]=command[find]))
+								if(command[find++] == '\0')
+									break;
+							if(receive[find_r-1] != '\0')
+								receive[find_r-1] = '\0';
+							else
+							{
+								receive[find_r-1] = '\0';
+								command[find] = '\0';
+							}
+							put_file(receive,buf,new_fd);
+						}
 					}
 					else if(check(command,"cd"))
 					{
@@ -225,7 +272,7 @@ void put_file(char *file_name,char *buf,int new_fd)
 		count_of_packets++;
 		if(temp<PACKET_SIZE-1)
 		{
-			printf("Packet #%d sent \n",count_of_packets);
+			// printf("Packet #%d sent \n",count_of_packets);
 			buf[temp]='0';
 		}
 		else
@@ -270,9 +317,9 @@ void get_file(char *file_name,char * buf,int sockfd)
 		count_of_packets++;
 		count = 0 ;
 		fwrite(buf,sizeof(char),numbytes-1,fd);
-		printf("client: received packet #%d\n",count_of_packets);	
+		// printf("client: received packet #%d\n",count_of_packets);	
 		
-		printf("%d\n",numbytes);
+//		printf("%d\n",numbytes);
 		if(buf[numbytes-1]=='0')
 		{
 			break ;
@@ -294,6 +341,8 @@ void get_file(char *file_name,char * buf,int sockfd)
 		
 		printf("%d\n",numbytes);*/
 	}
+	
+	printf("File transferred\n");
 	fclose(fd);
 ////
 }

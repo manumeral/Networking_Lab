@@ -134,11 +134,11 @@ int main(int argc, char *argv[])
 				if(acknowledgement == '1')
 				{
 					count_of_comm_pack++;
-					printf("Command Packet #%d Sent\n",count_of_comm_pack);
+					// printf("Command Packet #%d Sent\n",count_of_comm_pack);
 				}
 				if(eof_command)
 				{
-					printf("Command Transfer Completed !\n");
+					// printf("Command Transfer Completed !\n");
 				}
 			}
 		}
@@ -239,7 +239,7 @@ void put_file(char *file_name,char *buf,int new_fd)
 		count_of_packets++;
 		if(temp<PACKET_SIZE-1)
 		{
-			printf("Packet #%d sent \n",count_of_packets);
+			// printf("Packet #%d sent \n",count_of_packets);
 			buf[temp]='0';
 		}
 		else
@@ -286,7 +286,7 @@ void get_file(char *file_name,char * buf,int sockfd)
 		fwrite(buf,sizeof(char),numbytes-1,fd);
 //		printf("client: received packet #%d\n",count_of_packets);	
 		
-		printf("%d\n",numbytes);
+		// printf("%d\n",numbytes);
 		if(buf[numbytes-1]=='0')
 		{
 			break ;
@@ -308,6 +308,7 @@ void get_file(char *file_name,char * buf,int sockfd)
 		
 		printf("%d\n",numbytes);*/
 	}
+	printf("File transferred\n");
 	fclose(fd);
 ////
 }

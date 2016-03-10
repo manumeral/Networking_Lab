@@ -147,7 +147,7 @@ int main(void)
 							command[iter++]=buf[c++];
 						}
 					}
-					printf("\n%d client: received packet #%d\n",buf[PACKET_SIZE-1],count_of_comm_pack);	
+					// printf("\n%d client: received packet #%d\n",buf[PACKET_SIZE-1],count_of_comm_pack);	
 				 
 					if(buf[PACKET_SIZE-1] == '0')
 					{
@@ -272,7 +272,7 @@ void put_file(char *file_name,char *buf,int new_fd)
 		count_of_packets++;
 		if(temp<PACKET_SIZE-1)
 		{
-			printf("Packet #%d sent \n",count_of_packets);
+			// printf("Packet #%d sent \n",count_of_packets);
 			buf[temp]='0';
 		}
 		else
@@ -317,7 +317,7 @@ void get_file(char *file_name,char * buf,int sockfd)
 		count_of_packets++;
 		count = 0 ;
 		fwrite(buf,sizeof(char),numbytes-1,fd);
-		printf("client: received packet #%d\n",count_of_packets);	
+		// printf("client: received packet #%d\n",count_of_packets);	
 		
 //		printf("%d\n",numbytes);
 		if(buf[numbytes-1]=='0')
@@ -341,6 +341,8 @@ void get_file(char *file_name,char * buf,int sockfd)
 		
 		printf("%d\n",numbytes);*/
 	}
+	
+	printf("File transferred\n");
 	fclose(fd);
 ////
 }
