@@ -12,7 +12,6 @@ subject = ''
 cc = []
 bcc = []
 flag = 0
-derpyAscii = """Mayank"""
 
 
 # Function - getServerAddr
@@ -36,87 +35,48 @@ def getServAddr():
     else :
         flag = 1
 
-
-# Function - getServerPort
-# Description - asks the user to input the mail server's port number
 def getServPort():
     global mailport,flag
+    p = int(input('Enter the port number to connect to: '))
     while(p>65535 or p<0):
         print('Invalid entry. Port number must be between 0 and 65,535.')
         p = int(input('Enter the port number to connect to: '))
     mailport = p
 
-
-# Function - getFromAddr
-# Description - asks the user to input the email address they're sending from
 def getFromAddr():
     global mailfrom
     mailfrom = input('From: ')
+    global username
+    username = mailfrom
 
-# Function - getRcptAddr
-# Description - asks the user to input the email address they're sending to
 def getRcptAddr():
     global mailrcpt,cc,bcc
     mailrcpt = input('To: ')
-    #print('CC(enter the ids seperated with a ;): ')
     cc = input('CC(enter the ids seperated with a ;): ').split(';')
-    #print (cc[:])
     bcc = input('BCC(enter the ids seperated with a ;): ').split(';')
 
-# Function - getMailMsg
-# Description - asks the user to input a message terminated with an EOF to send
 def getMailMess():
     global mailmess,subject
     print('SUBJECT :')
     subject = input()
-
-    print('--------------------------------------------------------------------------------')
-    print('|                              Mail Body                                       |')
-    print('--------------------------------------------------------------------------------')
+    print('Mail Body:')
     mailmess = sys.stdin.read(-1)
 
-# Function - getUserName
-# Description - asks the user to input their username to authenticate
-def getUserName():
-    global username
-    username = mailfrom
-
-# Function - getPassword
-# Description - asks the user to input their password to authenticate
 def getPassword():
     global password
     password = getpass.getpass('Enter your password: ')
 
-# Function - getCryptoOpt
-# Description - asks the user to select their method of encryption
 def getCryptoOpt():
     global cryptmethod
-    while True:
-        #c = input('Choose an encryption protocol (TLS, SSL, or none): ')
-        cryptmethod = 'SSL'
+    cryptmethod = 'SSL'
 
-# Function - dispMenu
-# Description - displays the program's main menu
 def dispMenu():
-
-
     getFromAddr()
-
     getServAddr()
-
-    if mailport == -1:
-        getServPort()
-    else:
-        getServPort()
-    
-    
+    getServPort()
     getRcptAddr()
-
-    getUserName()
-
-    
     getPassword()
-    #print("7) Crypto: " + cryptmethod)
+    print("Crypto:SSL")
     getCryptoOpt()
 
 # Function - mainLoop
@@ -142,13 +102,7 @@ def getSSLSocket():
 # Description - handles sending the message
 def smtpSession():
     # Get the socket
-    if cryptmethod == 'SSL':
-        sock = getSSLSocket()
-    elif cryptmethod == 'TLS':
-        sock = getTLSSocket()
-    else:
-        sock = getPlainSocket()
-    # Attempt to connect to the SMTP server
+    sock = getSSLSocket()
     sock.connect((mailserv, mailport))
     # Receive response from server and print it
     respon = sock.recv(2048)
@@ -189,7 +143,7 @@ def smtpSession():
     total = cc + bcc
     total.insert(0,mailrcpt)
     l = len(total)
-    for itr in range(l-1):
+    for itr in range(l):
         rcptMesg = 'RCPT TO: <' + total[itr] +'>\r\n'
         print(rcptMesg)
         sock.send(rcptMesg.encode('utf-8'))
@@ -211,18 +165,7 @@ def smtpSession():
     respon = sock.recv(2048)
     print(str(respon, 'utf-8'))
     mailbody = mailmess +  '\r\n'
-    #mailbody = """From:""" + mailfrom[0:i-1] + """  <""" + mailfrom + """>
-    #To: To Person <""" + mailrcpt + """>
-    #Cc:""" + str(cc[:]) + """
-    #Subject:""" + subject + """
-    #""" + mailmess +  '\r\n'
 
-#    message = "From: %s\r\n" % mailfrom
-#    + "To: %s\r\n" % mailrcpt
-#    + "CC: %s\r\n" % ",".join(cc)
-#    + "Subject: %s\r\n" % subject
-#    + "\r\n" 
-#    + mailmess + '\r\n'
     print(mailbody)
     sock.send(mailbody.encode('utf-8'))
     fullStop = '\r\n.\r\n'
@@ -240,3 +183,4 @@ def smtpSession():
     sock.close()
 
 mainLoop()
+#help from https://gist.github.com/Longlius/3735084
