@@ -1,15 +1,4 @@
-#!/usr/bin/python
-
-# Name: Matthew Longley
-# Date: 2012/09/25
-# Course: COMP 3825-001
-# Project #1 - Mail Client
-
-# NOTE: This program uses Python 3
-
 import base64, getpass, socket, ssl, sys
-
-# Global variables
 mailserv = ''
 mailport = -1
 mailfrom = ''
@@ -23,9 +12,7 @@ subject = ''
 cc = []
 bcc = []
 flag = 0
-
-# Derpy hooves ascii art for maximum swag
-derpyAscii = """Sourav"""
+derpyAscii = """Mayank"""
 
 
 # Function - getServerAddr
@@ -34,15 +21,11 @@ def getServAddr():
     global mailserv,flag,i
     local = mailfrom
     i = 0
-    #mailserv = input('Enter the address of the mail server: ')
     for i in range(len(mailfrom)-1):
         if mailfrom[i] == "@":
             break
-    #mailfrom.find('@')
     i = i+1
-    #print(i)
     sub = mailfrom[i:]
-    #print(sub)
     if sub == "gmail.com" :
         mailserv = "smtp.gmail.com"
     elif sub == "yahoo.com" :
@@ -52,24 +35,17 @@ def getServAddr():
         flag = 2
     else :
         flag = 1
-        #print('Cannot send mail other than Gmail or Yahoo mail ')
 
 
 # Function - getServerPort
 # Description - asks the user to input the mail server's port number
 def getServPort():
     global mailport,flag
-    #p = int(input('Enter the port number to connect to: '))
-    if flag == 2 :
-        p = 587
-    else:
-        p = 465
-    if not (p < 0 or p > 65535):
-        mailport = p
-    else:
+    while(p>65535 or p<0):
         print('Invalid entry. Port number must be between 0 and 65,535.')
-    
-            
+        p = int(input('Enter the port number to connect to: '))
+    mailport = p
+
 
 # Function - getFromAddr
 # Description - asks the user to input the email address they're sending from
@@ -97,7 +73,7 @@ def getMailMess():
     print('--------------------------------------------------------------------------------')
     print('|                              Mail Body                                       |')
     print('--------------------------------------------------------------------------------')
-#    mailmess = sys.stdin.read(-1)
+    mailmess = sys.stdin.read(-1)
 
 # Function - getUserName
 # Description - asks the user to input their username to authenticate
@@ -117,19 +93,13 @@ def getCryptoOpt():
     global cryptmethod
     while True:
         #c = input('Choose an encryption protocol (TLS, SSL, or none): ')
-        c = 'SSL'
-        if (c == 'TLS') or (c == 'SSL') or (c == 'none'):
-            cryptmethod = c
-            return
-        else:
-            print("Invalid choice!")
-        
+        cryptmethod = 'SSL'
 
 # Function - dispMenu
 # Description - displays the program's main menu
 def dispMenu():
 
-    
+
     getFromAddr()
 
     getServAddr()
@@ -152,10 +122,10 @@ def dispMenu():
 # Function - mainLoop
 # Description - handles the main loop of the program
 def mainLoop():
-    useropt = 'derp'
+    useropt = 'N'
     while useropt != 'Y':
         dispMenu()
-        useropt = input('Enter (Y/n) to send: ')
+        useropt = input('Enter (Y/N) to send: ')
         
         if useropt == 'Y':
             getMailMess()
@@ -167,16 +137,6 @@ def mainLoop():
 # Description - creates a new socket, wraps it in an SSL context, and returns it
 def getSSLSocket():
     return ssl.wrap_socket(socket.socket(socket.AF_INET, socket.SOCK_STREAM), ssl_version=ssl.PROTOCOL_SSLv23)
-
-# Function - getTLSSocket
-# Description - creates a new socket, wraps it in a TLS context, and returns it
-#def getTLSSocket():
-    return ssl.wrap_socket(socket.socket(socket.AF_INET, socket.SOCK_STREAM), ssl_version=ssl.PROTOCOL_TLSv1)
-
-# Function - getPlainSocket
-# Description - creates a new vanilla socket and returns it
-#def getPlainSocket():
-    return socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Function - smtpSession
 # Description - handles sending the message
@@ -194,7 +154,7 @@ def smtpSession():
     respon = sock.recv(2048)
     print(str(respon, 'utf-8'))
     # Say HELO and print response
-    heloMesg = 'HELO Sourav\r\n'
+    heloMesg = 'HELO Mayank\r\n'
     print(heloMesg)
     sock.send(heloMesg.encode('utf-8'))
     respon = sock.recv(2048)
